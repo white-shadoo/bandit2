@@ -33,7 +33,7 @@ import requests
 from bandit.core import constants
 from bandit.core import docs_utils
 from bandit.core import test_properties
-
+from bandit_github_formatter import slack
 LOG = logging.getLogger(__name__)
 
 
@@ -137,7 +137,22 @@ def comment_on_pr(message):
             request_path = (
                 f"https://api.github.com/repos/{event['repository']['full_name']}/issues/{event['number']}/comments")
 
-            requests.post(request_path, headers=headers_dict, json={"body": message})
+            response = requests.post(request_path, headers=headers_dict, json={"body": message})
+            if response.status_code == 201 or response.status_code == 200:
+                data = response.json()
+                return data.get("html_url")
+            else:
+                print(f"Failed to create comment: {response.status_code} {response.text}")
+                return None
+
+def slack_notify(comment_url: str):
+    if os.getenv("GITHUB_EVENT_NAME") == "pull_request":
+        with open(os.getenv("GITHUB_EVENT_PATH")) as json_file:
+            event = json.load(json_file)
+            repo = event.get("repository", {}).get("full_name", "undefined/unknown-repo")
+            pr_number = event.get("number")
+            pr_url = f"https://github.com/{repo}/issues/{pr_number}"
+            slack.notify(pr_url, comment_url, repo.split("/")[-1])
 
 
 @test_properties.accepts_baseline
@@ -171,5 +186,6 @@ def report(manager, fileobj, sev_level, conf_level, lines=-1):
         bits.append("</details>")
 
         result = '\n'.join([bit for bit in bits]) + '\n'
-
-        comment_on_pr(result)
+        comment_url=comment_on_pr(result)
+        if(os.getenv("INPUT_SLACK_NOTIFY")):
+            slack_notify(comment_url)

@@ -2,7 +2,7 @@ name: 'Bandit Action'
 description: 'Bandit Action'
 inputs:
   path:
-    description: 'File or directory to run bandit on'
+    description: 'Files or directories to run bandit on'
     required: false
     default: '.'
   level:
@@ -32,6 +32,21 @@ inputs:
   GITHUB_TOKEN:
     description: 'Github token of the repository (automatically created by Github)'
     required: true
+  SLACK_NOTIFY:
+    description: 'Enable Slack Notifications'
+    type: boolean
+    DEFAULT: false
+    required: false
+  SLACK_TOKEN:
+    description: 'Slack app token for slack notifications'
+    required: false
+  SLACK_CHANNEL:
+    description: 'Slack channel where Bandit notifications will be sent'
+    required: false
+  SLACK_USERNAME:
+    description: 'Username of the slack app'
+    required: false
+  
 runs:
   using: 'docker'
   image: 'Dockerfile'

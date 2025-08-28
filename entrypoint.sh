@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 #./entrypoint.sh . high high ./.venv 0 DEFAULT DEFAULT
 
@@ -58,4 +58,9 @@ else
     INI_PATH="--ini $7"
 fi
 
-bandit -f github -r $1 $LEVEL $CONFIDENCE $EXCLUDED_PATHS $EXIT_ZERO $SKIPS $INI_PATH
+# select unique files/directories
+unique_directories=($(printf "%s\n" "${@:1}" | sort -u))
+
+for dir in "${unique_directories[@]}"; do
+    bandit -f github -r $dir $LEVEL $CONFIDENCE $EXCLUDED_PATHS $EXIT_ZERO $SKIPS $INI_PATH
+done
